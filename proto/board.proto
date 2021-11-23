@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package df;
+option go_package = "df/board";
+
+enum Resource {
+    ANY = 0;
+    DESERT = 1;
+    LUMBER = 2;
+    BRICK = 3;
+    WOOL = 4;
+    GRAIN = 5;
+    ORE = 6;
+}
+
+message Point {
+    Edge left = 1;
+    Edge right = 2;
+    Edge up = 3;
+    Edge down = 4;
+
+    int32 progression = 5;
+    int32 player = 6;
+    TradePort port = 7;
+}
+
+message Edge {
+    Point start = 1;
+    Point end = 2;
+    int32 road = 3;
+}
+
+message Block {
+    int32 value = 1;
+    Resource resource = 2;
+    repeated Point points = 3;
+    bool thief = 4;
+}
+
+message TradePort {
+    Resource resource = 1;
+    int32 price = 2;
+}

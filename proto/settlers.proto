@@ -1,0 +1,6 @@
+syntax = "proto3";
+
+package srvc;
+option go_package = "srvc/settlers";
+
+service Settlers{}
