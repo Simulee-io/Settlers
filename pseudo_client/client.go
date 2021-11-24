@@ -12,7 +12,7 @@ import (
 func main() {
 	fmt.Println("pseudo client initialized")
 
-	cc, err := grpc.Dial("0.tcp.ngrok.io:19904", grpc.WithInsecure())
+	cc, err := grpc.Dial("localhost:8080", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("could not connect: %v", err)
 	}
