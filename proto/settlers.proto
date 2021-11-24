@@ -3,4 +3,13 @@ syntax = "proto3";
 package proto;
 option go_package = "proto/settlers";
 
-service Settlers{}
+message DiceRequest {}
+
+message DiceResponse {
+    int32 dice1 = 1;
+    int32 dice2 = 2;
+}
+
+service Settlers{
+    rpc rollDice(DiceRequest) returns (DiceResponse) {};
+}
