@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
-	"google.golang.org/grpc"
 	"log"
 	"net"
+
+	"google.golang.org/grpc"
 	settlers "simiulee.io/settlers/server/service"
 )
 
