@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package df;
-option go_package = "df/board";
+package proto;
+option go_package = "proto/board";
 
 enum Resource {
     ANY = 0;
