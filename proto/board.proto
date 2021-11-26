@@ -41,3 +41,10 @@ message TradePort {
     Resource resource = 1;
     int32 price = 2;
 }
+
+message Hexagon {
+    repeated Point p = 1;
+    repeated Edge e = 2;
+    Block block = 3;
+    int32 id = 4;
+}
