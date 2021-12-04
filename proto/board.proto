@@ -18,7 +18,6 @@ message Point {
     Edge right = 2;
     Edge up = 3;
     Edge down = 4;
-
     int32 progression = 5;
     int32 player = 6;
     TradePort port = 7;
@@ -47,4 +46,5 @@ message Hexagon {
     repeated Edge e = 2;
     Block block = 3;
     int32 id = 4;
+    bool ocean = 5;
 }

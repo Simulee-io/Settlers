@@ -26,10 +26,93 @@ func GenerateMapFromCSV(fileName string) (*board.Point, error) {
 		}
 	}()
 
-	//content, err := ioutil.ReadAll(file)
+	// content, err := ioutil.ReadAll(file)
 
-	//process
-	//..
+	// //process
+	// rows := strings.Split(string(content), string(10))
+	// var IDIter int32 = 0
+	// var head *board.Point
+	// horizHexCount := 0
+	// prevHexs := make([]*board.Hexagon, 25)
+	// currHexs := make([]*board.Hexagon, 25)
+	// //prevX := 0
+	// var currHex *board.Hexagon
+	// var prevHex *board.Hexagon
+	// currX := 0
+	// prevHexs = nil
+	// for i, r := range rows {
+	// 	elements := strings.Split(string(r), ",")
+	// 	prevHexs = currHexs
+	// 	prevHexs = append(prevHexs, nil)
+	// 	currHexs = nil
+	// 	//println("i", i)
+	// 	//prevX = currX
+	// 	currX = 0
+	// 	horizHexCount = 0
+
+	// 	for y, c := range elements {
+
+	// 		char := string(c)
+	// 		//println("y", y)
+	// 		//println(char)
+	// 		_, numeric := strconv.Atoi(char)
+	// 		if char == "x" {
+	// 			if y < 3 {
+	// 				currX++
+
+	// 			}
+	// 			currHexs = append(currHexs, nil)
+	// 		} else if char == "h" {
+	// 			currHex = makeHex(IDIter, "")
+	// 			IDIter++
+
+	// 			if horizHexCount > 0 {
+	// 				connectHex(prevHex, currHex, "right", "")
+	// 			}
+	// 			if i == 0 && horizHexCount == 0 {
+	// 				head = currHex.P[0]
+	// 			}
+	// 			horizHexCount++
+
+	// 			currHexs = append(currHexs, currHex)
+	// 			currHexs = append(currHexs, currHex)
+
+	// 			println(i, y)
+	// 			if prevHexs != nil {
+	// 				if prevHexs[y] != nil {
+	// 					if prevHexs[y+1] == prevHexs[y] {
+	// 						connectHex(prevHexs[y], currHex, "down", "left")
+	// 					} else {
+	// 						connectHex(prevHexs[y], currHex, "down", "right")
+	// 					}
+	// 				}
+	// 			}
+
+	// 		} else if numeric == nil { //is a numeric
+	// 			populatePorts(currHex, char)
+	// 			prevHex = currHex
+
+	// 			println(i, y)
+	// 			if prevHexs != nil {
+	// 				if prevHexs[y] != nil {
+	// 					if prevHexs[y+1] == prevHexs[y] {
+	// 						connectHex(prevHexs[y], currHex, "down", "left")
+	// 					} else {
+	// 						connectHex(prevHexs[y], currHex, "down", "right")
+	// 					}
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// copy := head.Down.End.Down.End
+	// counter := 0
+	// for copy.Right != nil {
+	// 	copy = copy.Right.End
+	// 	counter += 1
+	// }
+	// println("found points ", counter)
 
 	//temp return
 	return nil, nil

@@ -22,7 +22,6 @@ func main() {
 	c := settlers.NewSettlersClient(cc)
 
 	//fmt.Printf("Created client %f", c)
-
 	doUnary(c)
 
 }
