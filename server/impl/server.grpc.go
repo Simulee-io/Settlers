@@ -34,7 +34,7 @@ func (*Server) RollDice(ctx context.Context, in *settlers.DiceRequest) (*settler
 
 	//temp call
 	//call function
-	GenerateMapFromCSV("baseMap.csv")
+	MakeMapFromCSV("mini.csv")
 
 	return response, nil
 }

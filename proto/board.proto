@@ -11,6 +11,7 @@ enum Resource {
     WOOL = 4;
     GRAIN = 5;
     ORE = 6;
+    NONE = 7;
 }
 
 message Point {
@@ -45,6 +46,17 @@ message Hexagon {
     repeated Point p = 1;
     repeated Edge e = 2;
     Block block = 3;
-    int32 id = 4;
+    string id = 6;
     bool ocean = 5;
+}
+
+message Row {
+    repeated Hexagon hexagons = 1;
+}
+
+message Board {
+    repeated Hexagon hexs = 1;
+    repeated Point points = 2;
+    repeated Edge edges = 3;
+    repeated Row rows = 4;
 }

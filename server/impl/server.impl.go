@@ -2,9 +2,11 @@ package impl
 
 import (
 	"errors"
+	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	board "simiulee.io/settlers/server/proto/board"
 )
@@ -13,7 +15,7 @@ import (
 // USE CASES //
 //           //
 
-func GenerateMapFromCSV(fileName string) (*board.Point, error) {
+func MakeMapFromCSV(fileName string) (*board.Board, error) {
 
 	//open & read map csv file
 	file, err := os.Open("server\\res\\rawmaps\\" + fileName)
@@ -26,96 +28,190 @@ func GenerateMapFromCSV(fileName string) (*board.Point, error) {
 		}
 	}()
 
-	// content, err := ioutil.ReadAll(file)
+	hexagons := [][]*board.Hexagon{}
 
-	// //process
-	// rows := strings.Split(string(content), string(10))
-	// var IDIter int32 = 0
-	// var head *board.Point
-	// horizHexCount := 0
-	// prevHexs := make([]*board.Hexagon, 25)
-	// currHexs := make([]*board.Hexagon, 25)
-	// //prevX := 0
-	// var currHex *board.Hexagon
-	// var prevHex *board.Hexagon
-	// currX := 0
-	// prevHexs = nil
-	// for i, r := range rows {
-	// 	elements := strings.Split(string(r), ",")
-	// 	prevHexs = currHexs
-	// 	prevHexs = append(prevHexs, nil)
-	// 	currHexs = nil
-	// 	//println("i", i)
-	// 	//prevX = currX
-	// 	currX = 0
-	// 	horizHexCount = 0
+	content, err := ioutil.ReadAll(file)
+	rows := strings.Split(string(content), string(10))
+	fmtd := [][]string{}
 
-	// 	for y, c := range elements {
+	//cycle through rows of text, generate readable array
+	for x, r := range rows {
+		row := strings.TrimRight(string(r), "\r\n")
+		row = strings.TrimRight(string(row), string(10))
+		items := strings.Split(row, ",")
+		prev := "#"
+		iter := 0
 
-	// 		char := string(c)
-	// 		//println("y", y)
-	// 		//println(char)
-	// 		_, numeric := strconv.Atoi(char)
-	// 		if char == "x" {
-	// 			if y < 3 {
-	// 				currX++
+		//cycle through ',' delimetered items in row
+		for _, rawVal := range items {
+			fmtd = append(fmtd, []string{})
+			val := string(rawVal)
+			if iter > 1 {
+				iter = 0
+			}
 
-	// 			}
-	// 			currHexs = append(currHexs, nil)
-	// 		} else if char == "h" {
-	// 			currHex = makeHex(IDIter, "")
-	// 			IDIter++
+			if val == "" {
+				if prev != "" {
+					iter = 0
+				}
+				if prev == "" && iter == 1 {
+					fmtd[x] = append(fmtd[x], "_")
+				}
+				iter += 1
+			} else if val == "w" {
+				if prev != "w" {
+					iter = 0
+				}
+				if prev == "w" && iter == 1 {
+					fmtd[x] = append(fmtd[x], "w")
+				}
+				iter += 1
+			} else { // port positions
+				if prev == "h" {
+					fmtd[x] = append(fmtd[x], val)
+				}
+			}
 
-	// 			if horizHexCount > 0 {
-	// 				connectHex(prevHex, currHex, "right", "")
-	// 			}
-	// 			if i == 0 && horizHexCount == 0 {
-	// 				head = currHex.P[0]
-	// 			}
-	// 			horizHexCount++
+			prev = val
 
-	// 			currHexs = append(currHexs, currHex)
-	// 			currHexs = append(currHexs, currHex)
+		}
+	}
 
-	// 			println(i, y)
-	// 			if prevHexs != nil {
-	// 				if prevHexs[y] != nil {
-	// 					if prevHexs[y+1] == prevHexs[y] {
-	// 						connectHex(prevHexs[y], currHex, "down", "left")
-	// 					} else {
-	// 						connectHex(prevHexs[y], currHex, "down", "right")
-	// 					}
-	// 				}
-	// 			}
+	//create hexagon array from fmtd
+	for x, xv := range fmtd {
 
-	// 		} else if numeric == nil { //is a numeric
-	// 			populatePorts(currHex, char)
-	// 			prevHex = currHex
+		hexagons = append(hexagons, []*board.Hexagon{})
 
-	// 			println(i, y)
-	// 			if prevHexs != nil {
-	// 				if prevHexs[y] != nil {
-	// 					if prevHexs[y+1] == prevHexs[y] {
-	// 						connectHex(prevHexs[y], currHex, "down", "left")
-	// 					} else {
-	// 						connectHex(prevHexs[y], currHex, "down", "right")
-	// 					}
-	// 				}
-	// 			}
-	// 		}
-	// 	}
-	// }
+		for y, yv := range xv {
 
-	// copy := head.Down.End.Down.End
-	// counter := 0
-	// for copy.Right != nil {
-	// 	copy = copy.Right.End
-	// 	counter += 1
-	// }
-	// println("found points ", counter)
+			val := string(yv)
 
-	//temp return
-	return nil, nil
+			if val == "_" {
+				//empty becomes water
+				hexagons[x] = append(hexagons[x], makeHex(strconv.Itoa(x)+strconv.Itoa(y), "", true))
+			} else if val == "w" {
+				hexagons[x] = append(hexagons[x], makeHex(strconv.Itoa(x)+strconv.Itoa(y), "", true))
+			} else { //numeric indicating land hex with port positions
+				//hexagons[x][y] = makeHex(strconv.Itoa(x)+strconv.Itoa(y), val, false)
+				hexagons[x] = append(hexagons[x], makeHex(strconv.Itoa(x)+strconv.Itoa(y), val, false))
+			}
+		}
+	}
+
+	//link hexagons horizontally
+	for x, xv := range hexagons {
+		for y, _ := range xv {
+			if y > 0 {
+				connectHexRight(hexagons[x][y-1], hexagons[x][y])
+			}
+		}
+	}
+
+	//link hexagons vertically
+	for x, xv := range hexagons {
+		if x > 0 {
+			for y, _ := range xv {
+				//print(strconv.Itoa(x) + " " + strconv.Itoa(y) + "\n")
+
+				linePos := (x + 1) % 2
+				if linePos == 0 {
+					connectHexUp(hexagons[x][y], hexagons[x-1][y], "right")
+					if y < len(hexagons[x-1]) {
+						connectHexUp(hexagons[x][y], hexagons[x-1][y+1], "left")
+					}
+				} else {
+					if y < len(hexagons[x-1]) {
+						connectHexUp(hexagons[x][y], hexagons[x-1][y], "left")
+					}
+					if y != 0 {
+						connectHexUp(hexagons[x][y], hexagons[x-1][y-1], "right")
+					}
+				}
+			}
+		}
+	}
+
+	//populate vtables
+	vPoints := []*board.Point{}
+	vEdges := []*board.Edge{}
+	vHexs := []*board.Hexagon{}
+	x := 0
+	for x = range hexagons {
+		if len(hexagons[x]) == 0 {
+			break
+		}
+
+		if x%2 != 0 {
+			continue
+		}
+
+		//init ptr to first of upper points of hexagon in row
+		ptr := hexagons[x][0].P[0]
+
+		//iterate along the row
+		for ptr.Right != nil {
+			//append point
+			vPoints = append(vPoints, ptr)
+
+			//append present edges
+			vEdges = append(vEdges, ptr.Right)
+			if ptr.Down != nil {
+				vEdges = append(vEdges, ptr.Down)
+			}
+
+			//iterate
+			ptr = ptr.Right.End
+		}
+		//append final point in row
+		vPoints = append(vPoints, ptr)
+		if ptr.Down != nil {
+			vEdges = append(vEdges, ptr.Down)
+		}
+
+		//set ptr to first of lower points of hexagon row
+		ptr = hexagons[x][0].P[5]
+
+		//iterate along the row
+		for ptr.Right != nil {
+			//append point
+			vPoints = append(vPoints, ptr)
+
+			//append present edges
+			vEdges = append(vEdges, ptr.Right)
+			if ptr.Down != nil {
+				vEdges = append(vEdges, ptr.Down)
+			}
+
+			//iterate
+			ptr = ptr.Right.End
+		}
+		//append final point in row
+		vPoints = append(vPoints, ptr)
+		if ptr.Down != nil {
+			vEdges = append(vEdges, ptr.Down)
+		}
+	}
+
+	for _, x := range hexagons {
+		for _, y := range x {
+			vHexs = append(vHexs, y)
+		}
+	}
+
+	//create board and return
+	_board := new(board.Board)
+	_board.Edges = vEdges
+	_board.Points = vPoints
+	_board.Hexs = vHexs
+	bRows := []*board.Row{}
+	for _, xv := range hexagons {
+		r := new(board.Row)
+		r.Hexagons = xv
+		bRows = append(bRows, r)
+	}
+	_board.Rows = bRows
+
+	return _board, nil
 }
 
 //                  //
@@ -125,7 +221,7 @@ func GenerateMapFromCSV(fileName string) (*board.Point, error) {
 // HEX & POINT MANIPULATION:
 
 //create hex and link all points
-func makeHex(id int32, ports string) *board.Hexagon {
+func makeHex(id string, ports string, ocean bool) *board.Hexagon {
 
 	//create and link all edges & points
 	this := new(board.Hexagon)
@@ -133,7 +229,7 @@ func makeHex(id int32, ports string) *board.Hexagon {
 	this.P = make([]*board.Point, 6)
 	this.E = make([]*board.Edge, 6)
 	this.Block = new(board.Block)
-	this.Block.Resource = board.Resource_DESERT
+	this.Block.Resource = board.Resource_NONE
 
 	this.P[0] = new(board.Point)
 	this.P[1] = new(board.Point)
@@ -161,6 +257,13 @@ func makeHex(id int32, ports string) *board.Hexagon {
 
 	//populate ports
 	populatePorts(this, ports)
+
+	//ocean
+	if ocean {
+		this.Ocean = true
+	} else {
+		this.Ocean = false
+	}
 
 	return this
 
@@ -201,108 +304,62 @@ func connectPoints(p1 *board.Point, edge *board.Edge, p2 *board.Point, dir strin
 		return (errors.New("connectPoints: invalid direction received"))
 	}
 
-	p1.Progression = 1
-	p2.Progression = 1
+	return nil
+}
+
+func connectHexRight(h1 *board.Hexagon, h2 *board.Hexagon) error {
+	if h2.P[0].Port != nil {
+		h1.P[2].Port = h2.P[0].Port
+	}
+	if h2.P[5].Port != nil {
+		h1.P[3].Port = h2.P[5].Port
+	}
+
+	h1.P[2].Right = h2.P[0].Right
+	h1.P[3].Right = h2.P[5].Right
+
+	h2.P[0] = h1.P[2]
+	h2.P[5] = h1.P[3]
+	h2.E[5] = h1.E[2]
 
 	return nil
 }
 
-//connect 2 hexs (replacing 2nd hex's colliding points & edges with the first hex's)
-func connectHex(h1 *board.Hexagon, h2 *board.Hexagon, dir string, offset string) error {
-	if dir == "right" {
-		if h2.P[0].Port != nil {
-			h1.P[2].Port = h2.P[0].Port
-		}
+func connectHexUp(h1 *board.Hexagon, h2 *board.Hexagon, offset string) error {
+	if offset == "left" {
 		if h2.P[5].Port != nil {
-			h1.P[3].Port = h2.P[5].Port
+			h1.P[1].Port = h2.P[5].Port
+		}
+		if h2.P[4].Port != nil {
+			h1.P[2].Port = h2.P[4].Port
 		}
 
-		h1.P[2].Right = h2.P[0].Right
-		h1.P[3].Right = h2.P[5].Right
+		h1.P[1].Up = h2.P[5].Up
+		h1.P[2].Up = h2.P[4].Up
+		connectPoints(h1.P[2], h2.E[3], h2.P[3], "right")
 
-		h2.P[0] = h1.P[2]
-		h2.P[5] = h1.P[3]
-		h2.E[5] = h1.E[2]
-	} else if dir == "left" {
-		if h2.P[2].Port != nil {
-			h1.P[0].Port = h2.P[2].Port
+		h2.P[5] = h1.P[1]
+		h2.P[4] = h1.P[2]
+		connectPoints(h2.P[5], h2.E[4], h2.P[4], "right")
+
+	} else if offset == "right" {
+		if h2.P[4].Port != nil {
+			h1.P[0].Port = h2.P[4].Port
 		}
 		if h2.P[3].Port != nil {
-			h1.P[5].Port = h2.P[3].Port
+			h1.P[1].Port = h2.P[3].Port
 		}
 
-		h1.P[0].Left = h2.P[2].Left
-		h1.P[5].Left = h2.P[3].Left
+		h1.P[0].Up = h2.P[4].Up
+		h1.P[1].Up = h2.P[3].Up
+		connectPoints(h2.P[5], h2.E[4], h1.P[0], "right")
 
-		h2.P[2] = h1.P[0]
-		h2.P[3] = h1.P[5]
-		h2.E[2] = h1.E[5]
-	} else if dir == "down" {
-		if offset == "left" {
-			if h2.P[1].Port != nil {
-				h1.P[5].Port = h2.P[1].Port
-			}
-			if h2.P[2].Port != nil {
-				h1.P[4].Port = h2.P[2].Port
-			}
+		h2.P[4] = h1.P[0]
+		h2.P[3] = h1.P[1]
+		connectPoints(h2.P[4], h2.E[3], h2.P[3], "right")
 
-			h1.P[5].Down = h2.P[1].Down
-			h1.P[4].Down = h2.P[2].Down
-
-			h2.P[1] = h1.P[5]
-			h2.P[2] = h1.P[4]
-			h2.E[1] = h1.E[4]
-		} else if offset == "right" {
-			if h2.P[0].Port != nil {
-				h1.P[4].Port = h2.P[0].Port
-			}
-			if h2.P[1].Port != nil {
-				h1.P[3].Port = h2.P[1].Port
-			}
-
-			h1.P[4].Down = h2.P[0].Down
-			h1.P[3].Down = h2.P[1].Down
-
-			h2.P[0] = h1.P[4]
-			h2.P[1] = h1.P[3]
-			h2.E[0] = h1.E[3]
-		} else {
-			return (errors.New("connectHex: invalid offset received"))
-		}
-	} else if dir == "up" {
-		if offset == "left" {
-			if h2.P[5].Port != nil {
-				h1.P[1].Port = h2.P[5].Port
-			}
-			if h2.P[4].Port != nil {
-				h1.P[2].Port = h2.P[4].Port
-			}
-
-			h1.P[1].Up = h2.P[5].Up
-			h1.P[2].Up = h2.P[4].Up
-
-			h2.P[5] = h1.P[1]
-			h2.P[4] = h1.P[2]
-			h2.E[4] = h1.E[1]
-		} else if offset == "right" {
-			if h2.P[4].Port != nil {
-				h1.P[0].Port = h2.P[4].Port
-			}
-			if h2.P[3].Port != nil {
-				h1.P[1].Port = h2.P[3].Port
-			}
-
-			h1.P[0].Up = h2.P[4].Up
-			h1.P[1].Up = h2.P[3].Up
-
-			h2.P[4] = h1.P[0]
-			h2.P[3] = h1.P[1]
-			h2.E[3] = h1.E[0]
-		} else {
-			return (errors.New("connectHex: invalid offset received"))
-		}
 	} else {
-		return (errors.New("connectHex: invalid direction received"))
+		return (errors.New("connectHex: invalid offset received"))
 	}
 
 	return nil
